@@ -13,6 +13,7 @@ export default function Productos() {
   const [form, setForm] = useState(EMPTY)
   const [editing, setEditing] = useState<string | null>(null)
   const [recipeFor, setRecipeFor] = useState<string | null>(null)
+  const [imageUploading, setImageUploading] = useState(false)
 
   const load = useCallback(async () => {
     const [p, i, r, s] = await Promise.all([
@@ -71,6 +72,21 @@ export default function Productos() {
     load()
   }
 
+  async function handleImageUpload(file: File) {
+    if (file.size > 10 * 1024 * 1024) { alert('La imagen no puede superar 10 MB.'); return }
+    setImageUploading(true)
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+    const path = `${crypto.randomUUID()}.${ext}`
+    const { error } = await supabase.storage.from('productos').upload(path, file)
+    if (!error) {
+      const url = supabase.storage.from('productos').getPublicUrl(path).data.publicUrl
+      setForm((f) => ({ ...f, image_url: url }))
+    } else {
+      alert('No se pudo subir la imagen. Verifica que el bucket \'productos\' existe en Supabase Storage.')
+    }
+    setImageUploading(false)
+  }
+
   return (
     <div className="grid md:grid-cols-2 gap-4 items-start">
       <form onSubmit={save} className="card grid gap-3">
@@ -79,8 +95,27 @@ export default function Productos() {
           <input className="input" required placeholder="Caja de 12 galletas de chocolate" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
         <div><span className="label">Descripción</span>
           <textarea className="input" rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
-        <div><span className="label">Foto (URL, opcional)</span>
-          <input className="input" placeholder="https://…" value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} /></div>
+        <div>
+          <span className="label">Foto del producto</span>
+          <div className="flex items-center gap-3 mt-1">
+            {form.image_url
+              ? <img src={form.image_url} alt="preview" className="w-16 h-16 rounded-lg object-cover shrink-0 border border-stone-200" />
+              : <div className="w-16 h-16 rounded-lg bg-brand-100 flex items-center justify-center text-2xl shrink-0">🍪</div>}
+            <div className="flex-1">
+              <input
+                className="input"
+                type="file"
+                accept="image/*"
+                disabled={imageUploading}
+                onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0])}
+              />
+              {imageUploading && <p className="text-xs text-stone-500 mt-1">Subiendo imagen…</p>}
+              {form.image_url && !imageUploading && (
+                <p className="text-xs text-green-700 mt-1">✓ Imagen cargada</p>
+              )}
+            </div>
+          </div>
+        </div>
         <div className="grid grid-cols-2 gap-2">
           <div><span className="label">Precio de venta</span>
             <input className="input" type="number" min={0} step="any" required value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} /></div>

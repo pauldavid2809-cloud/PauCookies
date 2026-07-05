@@ -6,6 +6,7 @@ import { todayISO, waLink } from '../../lib/format'
 export default function Rutas() {
   const [date, setDate] = useState(todayISO())
   const [orders, setOrders] = useState<Order[]>([])
+  const [onlyPaid, setOnlyPaid] = useState(false)
 
   const load = useCallback(async () => {
     const { data } = await supabase
@@ -17,6 +18,8 @@ export default function Rutas() {
     setOrders(data ?? [])
   }, [date])
   useEffect(() => { load() }, [load])
+
+  const visible = onlyPaid ? orders.filter((o) => o.payment_confirmed) : orders
 
   function mapsUrl(o: Order) {
     if (o.lat != null && o.lng != null) return `https://www.google.com/maps/search/?api=1&query=${o.lat},${o.lng}`
@@ -33,14 +36,18 @@ export default function Rutas() {
       <h1 className="text-xl font-bold text-brand-800 mb-4">Ruta de entregas</h1>
       <div className="card flex flex-wrap gap-3 items-end mb-4">
         <div><span className="label">Día</span><input className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
-        <p className="text-sm text-stone-500">{orders.length} entrega(s) pendientes</p>
+        <p className="text-sm text-stone-500">{visible.length} entrega(s) pendientes</p>
+        <label className="text-sm text-stone-600 flex items-center gap-2 ml-auto">
+          <input type="checkbox" checked={onlyPaid} onChange={(e) => setOnlyPaid(e.target.checked)} />
+          Solo con pago confirmado
+        </label>
       </div>
 
-      {orders.length === 0 && <p className="text-sm text-stone-500">No hay entregas pendientes para este día. 🎉</p>}
+      {visible.length === 0 && <p className="text-sm text-stone-500">No hay entregas pendientes para este día{onlyPaid ? ' con pago confirmado' : ''}. 🎉</p>}
 
       <div className="grid gap-2">
-        {orders.map((o, idx) => (
-          <div key={o.id} className="card !py-3 flex items-center gap-3">
+        {visible.map((o, idx) => (
+          <div key={o.id} className={`card !py-3 flex items-center gap-3 ${!o.payment_confirmed ? 'border-red-300 bg-red-50/30' : ''}`}>
             <span className="w-7 h-7 rounded-full bg-brand-600 text-white text-sm font-bold flex items-center justify-center shrink-0">{idx + 1}</span>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm">

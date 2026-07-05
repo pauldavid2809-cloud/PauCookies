@@ -6,6 +6,10 @@ import { money, todayISO, waLink } from '../../lib/format'
 
 type Cart = Record<string, number>
 
+const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+const MAX_QTY = 50
+const MAX_FILE_MB = 10
+
 export default function Catalogo() {
   const [settings, setSettings] = useState<Settings | null>(null)
   const [products, setProducts] = useState<Product[]>([])
@@ -15,8 +19,10 @@ export default function Catalogo() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [bcvRate, setBcvRate] = useState<number | null>(null)
+  const [bcvFailed, setBcvFailed] = useState(false)
 
   const [form, setForm] = useState({ name: '', phone: '', date: '', address: '', notes: '' })
+  const [dateError, setDateError] = useState('')
   const [receipt, setReceipt] = useState<File | null>(null)
   const [sending, setSending] = useState(false)
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
@@ -45,6 +51,7 @@ export default function Catalogo() {
       if (p.data) setProducts(p.data)
       if (s.error || p.error) setError('No se pudo cargar el catálogo. Intenta de nuevo.')
       if (bcv?.promedio) setBcvRate(bcv.promedio)
+      else setBcvFailed(true)
       setLoading(false)
     })
   }, [])
@@ -58,13 +65,34 @@ export default function Catalogo() {
   const currency = settings?.currency ?? 'Bs'
   const totalBs = currency === '$' && bcvRate ? total * bcvRate : null
 
+  // Días habilitados para entrega (0=Dom … 6=Sáb)
+  const allowedDays = (settings?.delivery_days ?? '1,2,3,4,5').split(',').map(Number)
+  const allowedDaysText = allowedDays.map((d) => DAY_NAMES[d]).join(', ')
+
   function add(id: string, delta: number) {
-    setCart((c) => ({ ...c, [id]: Math.max(0, (c[id] ?? 0) + delta) }))
+    setCart((c) => ({ ...c, [id]: Math.min(MAX_QTY, Math.max(0, (c[id] ?? 0) + delta)) }))
+  }
+
+  function handleDateChange(val: string) {
+    if (!val) { setForm({ ...form, date: '' }); setDateError(''); return }
+    const [y, m, d] = val.split('-').map(Number)
+    const dayOfWeek = new Date(y, m - 1, d).getDay()
+    if (!allowedDays.includes(dayOfWeek)) {
+      setDateError(`Ese día no está disponible. Días habilitados: ${allowedDaysText}.`)
+      setForm({ ...form, date: '' })
+    } else {
+      setDateError('')
+      setForm({ ...form, date: val })
+    }
   }
 
   async function placeOrder(e: React.FormEvent) {
     e.preventDefault()
     if (!receipt) { setError('Adjunta la captura de tu comprobante de pago para enviar el pedido.'); return }
+    if (receipt.size > MAX_FILE_MB * 1024 * 1024) {
+      setError(`El comprobante no puede superar ${MAX_FILE_MB} MB. Reduce el tamaño de la imagen e inténtalo de nuevo.`)
+      return
+    }
     setError('')
     setSending(true)
     const orderId = crypto.randomUUID()
@@ -138,6 +166,13 @@ export default function Catalogo() {
 
       {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-4">{error}</div>}
 
+      {/* Aviso tasa BCV no disponible */}
+      {currency === '$' && bcvFailed && !bcvRate && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-lg p-3 mb-4">
+          ⚠️ No se pudo obtener la tasa BCV en este momento. Los precios se muestran en dólares; consulta con el negocio el monto exacto en bolívares para el pago móvil.
+        </div>
+      )}
+
       {!checkout && (
         <div className="grid gap-3">
           {products.length === 0 && <p className="text-center text-stone-500 text-sm">Aún no hay productos publicados.</p>}
@@ -154,7 +189,12 @@ export default function Catalogo() {
               <div className="flex items-center gap-2 shrink-0">
                 <button className="btn-outline btn !px-3" onClick={() => add(p.id, -1)} aria-label={`Quitar ${p.name}`}>−</button>
                 <span className="w-6 text-center font-semibold">{cart[p.id] ?? 0}</span>
-                <button className="btn !px-3" onClick={() => add(p.id, 1)} aria-label={`Agregar ${p.name}`}>+</button>
+                <button
+                  className="btn !px-3"
+                  onClick={() => add(p.id, 1)}
+                  aria-label={`Agregar ${p.name}`}
+                  disabled={(cart[p.id] ?? 0) >= MAX_QTY}
+                >+</button>
               </div>
             </div>
           ))}
@@ -200,14 +240,26 @@ export default function Catalogo() {
               required
               onChange={(e) => setReceipt(e.target.files?.[0] ?? null)}
             />
-            <p className="text-xs text-stone-500 mt-1">Haz la transferencia o pago móvil y adjunta aquí la captura.</p>
+            <p className="text-xs text-stone-500 mt-1">Haz la transferencia o pago móvil y adjunta aquí la captura. Máx. {MAX_FILE_MB} MB.</p>
           </div>
           <div><span className="label">Tu nombre</span>
             <input className="input" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
           <div><span className="label">Teléfono (WhatsApp)</span>
             <input className="input" required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
-          <div><span className="label">Fecha de entrega</span>
-            <input className="input" type="date" required min={todayISO()} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
+          <div>
+            <span className="label">Fecha de entrega</span>
+            <input
+              className="input"
+              type="date"
+              required
+              min={todayISO()}
+              value={form.date}
+              onChange={(e) => handleDateChange(e.target.value)}
+            />
+            {dateError
+              ? <p className="text-xs text-red-600 mt-1">{dateError}</p>
+              : <p className="text-xs text-stone-400 mt-1">Días disponibles: {allowedDaysText}</p>}
+          </div>
           <div>
             <span className="label">Ubicación para la entrega</span>
             {locStatus !== 'ok' ? (

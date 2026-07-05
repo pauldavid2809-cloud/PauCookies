@@ -1,5 +1,6 @@
 export function money(amount: number, currency = 'Bs'): string {
-  return `${currency} ${amount.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  const formatted = amount.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return currency === '$' ? `$${formatted}` : `Bs ${formatted}`
 }
 
 export function fmtDate(iso: string): string {

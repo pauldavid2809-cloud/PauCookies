@@ -2,6 +2,16 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import type { Settings } from '../../lib/types'
 
+const DAYS = [
+  { value: '0', label: 'Dom' },
+  { value: '1', label: 'Lun' },
+  { value: '2', label: 'Mar' },
+  { value: '3', label: 'Mié' },
+  { value: '4', label: 'Jue' },
+  { value: '5', label: 'Vie' },
+  { value: '6', label: 'Sáb' },
+]
+
 export default function Configuracion() {
   const [s, setS] = useState<Settings | null>(null)
   const [saved, setSaved] = useState(false)
@@ -20,6 +30,7 @@ export default function Configuracion() {
       margin_multiplier: s.margin_multiplier,
       payment_info: s.payment_info,
       whatsapp: s.whatsapp,
+      delivery_days: s.delivery_days ?? '1,2,3,4,5',
     }).eq('id', 1)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
@@ -50,6 +61,35 @@ export default function Configuracion() {
             </select></div>
           <div><span className="label">Margen sugerido (×)</span>
             <input className="input" type="number" min={1} step="0.1" value={s.margin_multiplier} onChange={(e) => setS({ ...s, margin_multiplier: Number(e.target.value) })} /></div>
+        </div>
+        <div>
+          <span className="label">Días disponibles para entrega</span>
+          <div className="flex gap-2 flex-wrap mt-1">
+            {DAYS.map((d) => {
+              const active = (s.delivery_days ?? '1,2,3,4,5').split(',').includes(d.value)
+              return (
+                <button
+                  key={d.value}
+                  type="button"
+                  onClick={() => {
+                    const current = (s.delivery_days ?? '1,2,3,4,5').split(',').filter(Boolean)
+                    const updated = active
+                      ? current.filter((x) => x !== d.value)
+                      : [...current, d.value].sort()
+                    setS({ ...s, delivery_days: updated.join(',') })
+                  }}
+                  className={`px-3 py-1.5 rounded-full text-sm font-semibold border transition-colors ${
+                    active
+                      ? 'bg-brand-600 text-white border-brand-600'
+                      : 'bg-white text-stone-500 border-stone-300 hover:border-brand-400'
+                  }`}
+                >
+                  {d.label}
+                </button>
+              )
+            })}
+          </div>
+          <p className="text-xs text-stone-400 mt-1">Las clientas solo podrán seleccionar estos días al pedir.</p>
         </div>
         <div><span className="label">WhatsApp del negocio (con código de país, ej. 58412…)</span>
           <input className="input" value={s.whatsapp} onChange={(e) => setS({ ...s, whatsapp: e.target.value })} /></div>

@@ -6,7 +6,7 @@ export interface Settings {
   payment_info: string
   whatsapp: string
   delivery_zones: string
-  advance_percent: number
+  delivery_days: string
 }
 
 export interface Ingredient {
@@ -42,7 +42,6 @@ export interface Order {
   phone: string
   delivery_date: string
   address: string
-  zone: string
   lat: number | null
   lng: number | null
   notes: string

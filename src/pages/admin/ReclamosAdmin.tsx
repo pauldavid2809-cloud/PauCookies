@@ -6,6 +6,8 @@ import { waLink } from '../../lib/format'
 export default function ReclamosAdmin() {
   const [list, setList] = useState<Complaint[]>([])
   const [showResolved, setShowResolved] = useState(false)
+  const [resolvingId, setResolvingId] = useState<string | null>(null)
+  const [resolution, setResolution] = useState('')
 
   const load = useCallback(async () => {
     const { data } = await supabase.from('complaints').select('*').order('created_at', { ascending: false })
@@ -14,9 +16,15 @@ export default function ReclamosAdmin() {
   useEffect(() => { load() }, [load])
 
   async function resolve(c: Complaint) {
-    const response = prompt('¿Cómo se resolvió? (opcional, queda en el historial)') ?? ''
-    await supabase.from('complaints').update({ status: 'atendida', response }).eq('id', c.id)
+    await supabase.from('complaints').update({ status: 'atendida', response: resolution }).eq('id', c.id)
+    setResolvingId(null)
+    setResolution('')
     load()
+  }
+
+  function startResolving(id: string) {
+    setResolvingId(id)
+    setResolution('')
   }
 
   const visible = list.filter((c) => showResolved || c.status === 'nueva')
@@ -43,13 +51,41 @@ export default function ReclamosAdmin() {
             </div>
             <p className="text-sm text-stone-700 whitespace-pre-wrap">{c.message}</p>
             {c.response && <p className="text-xs text-green-700 mt-2">✓ Resolución: {c.response}</p>}
+
+            {/* Inline resolver */}
+            {resolvingId === c.id && (
+              <div className="mt-3 border-t border-stone-100 pt-3 grid gap-2">
+                <span className="label">¿Cómo se resolvió? (opcional, queda en el historial)</span>
+                <textarea
+                  className="input"
+                  rows={2}
+                  placeholder="Ej.: Se reembolsó, se envió reposición, etc."
+                  value={resolution}
+                  onChange={(e) => setResolution(e.target.value)}
+                  autoFocus
+                />
+                <div className="flex gap-2">
+                  <button className="btn flex-1" onClick={() => resolve(c)}>Guardar y marcar atendido</button>
+                  <button className="btn-outline btn flex-1" onClick={() => setResolvingId(null)}>Cancelar</button>
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-2 mt-3">
               {c.phone && (
-                <a className="btn btn-outline !py-1 !px-3 !text-xs" href={waLink(c.phone, `¡Hola ${c.customer_name}! Te escribe Pau's Cookies sobre tu mensaje. Queremos resolverlo 💛`)} target="_blank" rel="noreferrer">
+                <a
+                  className="btn btn-outline !py-1 !px-3 !text-xs"
+                  href={waLink(c.phone, `¡Hola ${c.customer_name}! Te escribe Pau's Cookies sobre tu mensaje. Queremos resolverlo 💛`)}
+                  target="_blank" rel="noreferrer"
+                >
                   Responder por WhatsApp
                 </a>
               )}
-              {c.status === 'nueva' && <button className="btn !py-1 !px-3 !text-xs" onClick={() => resolve(c)}>Marcar atendido</button>}
+              {c.status === 'nueva' && resolvingId !== c.id && (
+                <button className="btn !py-1 !px-3 !text-xs" onClick={() => startResolving(c.id)}>
+                  Marcar atendido
+                </button>
+              )}
             </div>
           </div>
         ))}
