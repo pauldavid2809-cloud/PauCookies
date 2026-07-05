@@ -55,11 +55,32 @@ export default function Productos() {
     load()
   }
 
+
   async function remove(id: string) {
-    if (!confirm('¿Eliminar este producto?')) return
-    await supabase.from('products').delete().eq('id', id)
+    if (!confirm('¿Eliminar este producto? Esta acción no se puede deshacer.')) return
+
+    // Verificar si hay pedidos que usan este producto
+    const { count } = await supabase
+      .from('order_items')
+      .select('*', { count: 'exact', head: true })
+      .eq('product_id', id)
+
+    if (count && count > 0) {
+      alert(
+        `Este producto tiene ${count} pedido(s) registrado(s) y no puede eliminarse.\n\n` +
+        `👉 Desactívalo en su lugar: edita el producto y desmarca "Visible en el catálogo". Así deja de aparecer sin perder el historial de pedidos.`,
+      )
+      return
+    }
+
+    const { error } = await supabase.from('products').delete().eq('id', id)
+    if (error) {
+      alert('No se pudo eliminar el producto: ' + error.message)
+      return
+    }
     load()
   }
+
 
   async function addRecipeItem(productId: string, ingredientId: string, qty: number) {
     if (!ingredientId || qty <= 0) return
