@@ -48,6 +48,7 @@ export interface Order {
   notes: string
   status: OrderStatus
   payment_confirmed: boolean
+  receipt_url: string
   total: number
   created_at: string
 }

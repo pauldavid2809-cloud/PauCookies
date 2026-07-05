@@ -52,6 +52,7 @@ create table public.orders (
   notes text not null default '',
   status text not null default 'pendiente',   -- pendiente | confirmado | en_produccion | entregado | cancelado
   payment_confirmed boolean not null default false,
+  receipt_url text not null default '',
   total numeric not null default 0,
   created_at timestamptz not null default now()
 );
@@ -98,3 +99,13 @@ create policy "admin all recipe_items" on public.recipe_items for all to authent
 create policy "admin all orders" on public.orders for all to authenticated using (true) with check (true);
 create policy "admin all order_items" on public.order_items for all to authenticated using (true) with check (true);
 create policy "admin all complaints" on public.complaints for all to authenticated using (true) with check (true);
+
+-- Almacenamiento: bucket público para las capturas de comprobantes de pago
+insert into storage.buckets (id, name, public)
+values ('comprobantes', 'comprobantes', true)
+on conflict (id) do nothing;
+
+create policy "subir comprobantes"
+on storage.objects for insert
+to anon, authenticated
+with check (bucket_id = 'comprobantes');

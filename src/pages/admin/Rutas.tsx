@@ -48,7 +48,7 @@ export default function Rutas() {
                 {o.lat != null && <span className="text-xs text-green-700 ml-1">📍 GPS</span>}
               </p>
               <p className="text-xs text-stone-500 truncate">{o.address}</p>
-              {!o.payment_confirmed && <p className="text-xs text-red-600 font-semibold">⚠️ Cobrar completo: sin anticipo registrado</p>}
+              {!o.payment_confirmed && <p className="text-xs text-red-600 font-semibold">⚠️ Pago no verificado — revisar antes de entregar</p>}
             </div>
             <div className="flex gap-2 shrink-0">
               <a className="btn btn-outline !py-1 !px-2 !text-xs" href={mapsUrl(o)} target="_blank" rel="noreferrer">Mapa</a>

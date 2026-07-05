@@ -16,6 +16,8 @@ export default function Catalogo() {
   const [error, setError] = useState('')
 
   const [form, setForm] = useState({ name: '', phone: '', date: '', address: '', notes: '' })
+  const [receipt, setReceipt] = useState<File | null>(null)
+  const [sending, setSending] = useState(false)
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [locStatus, setLocStatus] = useState<'idle' | 'getting' | 'ok' | 'error'>('idle')
 
@@ -59,8 +61,15 @@ export default function Catalogo() {
 
   async function placeOrder(e: React.FormEvent) {
     e.preventDefault()
+    if (!receipt) { setError('Adjunta la captura de tu comprobante de pago para enviar el pedido.'); return }
     setError('')
+    setSending(true)
     const orderId = crypto.randomUUID()
+    const ext = (receipt.name.split('.').pop() || 'jpg').toLowerCase()
+    const path = `${orderId}.${ext}`
+    const { error: eUp } = await supabase.storage.from('comprobantes').upload(path, receipt)
+    if (eUp) { setSending(false); setError('No se pudo subir el comprobante. Verifica tu conexión e intenta de nuevo.'); return }
+    const receiptUrl = supabase.storage.from('comprobantes').getPublicUrl(path).data.publicUrl
     const { error: e1 } = await supabase.from('orders').insert({
       id: orderId,
       customer_name: form.name,
@@ -71,8 +80,9 @@ export default function Catalogo() {
       lng: coords?.lng ?? null,
       notes: form.notes,
       total,
+      receipt_url: receiptUrl,
     })
-    if (e1) { setError('No se pudo enviar el pedido. Revisa los datos e intenta de nuevo.'); return }
+    if (e1) { setSending(false); setError('No se pudo enviar el pedido. Revisa los datos e intenta de nuevo.'); return }
     const { error: e2 } = await supabase.from('order_items').insert(
       items.map(({ product, qty }) => ({
         order_id: orderId,
@@ -82,7 +92,8 @@ export default function Catalogo() {
         unit_price: product.price,
       })),
     )
-    if (e2) { setError('El pedido se creó pero hubo un problema con los productos. Escríbenos por WhatsApp.'); return }
+    if (e2) { setSending(false); setError('El pedido se creó pero hubo un problema con los productos. Escríbenos por WhatsApp.'); return }
+    setSending(false)
     setPlaced({ total, advance: (total * advancePct) / 100 })
     setCart({})
     setCheckout(false)
@@ -91,21 +102,19 @@ export default function Catalogo() {
   if (loading) return <div className="min-h-screen flex items-center justify-center text-stone-500">Cargando…</div>
 
   if (placed) {
-    const msg = `¡Hola! Soy ${form.name}. Acabo de hacer un pedido por ${money(placed.total, currency)} para el ${form.date}. Aquí envío mi comprobante del anticipo.`
+    const msg = `¡Hola! Soy ${form.name}. Acabo de hacer un pedido por ${money(placed.total, currency)} para el ${form.date} y ya subí mi comprobante del anticipo de ${money(placed.advance, currency)}.`
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
         <div className="card max-w-md w-full text-center">
           <div className="text-5xl mb-3">🎉</div>
           <h1 className="text-xl font-bold text-brand-800 mb-2">¡Pedido recibido!</h1>
           <p className="text-sm text-stone-600 mb-4">
-            Para confirmarlo, transfiere el anticipo del <b>{advancePct}%</b> ({money(placed.advance, currency)}) y envía el comprobante por WhatsApp.
+            Ya recibimos tu comprobante del anticipo ({money(placed.advance, currency)}).
+            Verificaremos el pago y te confirmaremos tu pedido por WhatsApp. 💛
           </p>
-          <div className="bg-brand-50 border border-brand-200 rounded-lg p-3 text-sm text-left whitespace-pre-wrap mb-4">
-            {settings?.payment_info}
-          </div>
           {settings?.whatsapp && (
             <a className="btn w-full" href={waLink(settings.whatsapp, msg)} target="_blank" rel="noreferrer">
-              Enviar comprobante por WhatsApp
+              Escribir al negocio por WhatsApp
             </a>
           )}
           <button className="btn-outline btn w-full mt-2" onClick={() => setPlaced(null)}>Volver al catálogo</button>
@@ -161,9 +170,24 @@ export default function Catalogo() {
             <div className="flex justify-between font-bold border-t border-brand-200 mt-2 pt-2">
               <span>Total</span><span>{money(total, currency)}</span>
             </div>
-            <div className="flex justify-between text-brand-700">
-              <span>Anticipo ({advancePct}%)</span><span>{money((total * advancePct) / 100, currency)}</span>
+            <div className="flex justify-between text-brand-700 font-bold">
+              <span>Anticipo a pagar ({advancePct}%)</span><span>{money((total * advancePct) / 100, currency)}</span>
             </div>
+          </div>
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
+            <p className="font-semibold text-amber-900 mb-1">💳 Paga el anticipo a estos datos:</p>
+            <p className="whitespace-pre-wrap text-amber-900">{settings?.payment_info}</p>
+          </div>
+          <div>
+            <span className="label">Comprobante de pago (obligatorio)</span>
+            <input
+              className="input"
+              type="file"
+              accept="image/*,.pdf"
+              required
+              onChange={(e) => setReceipt(e.target.files?.[0] ?? null)}
+            />
+            <p className="text-xs text-stone-500 mt-1">Haz la transferencia o pago móvil y adjunta aquí la captura.</p>
           </div>
           <div><span className="label">Tu nombre</span>
             <input className="input" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
@@ -192,8 +216,8 @@ export default function Catalogo() {
           <div><span className="label">Notas (opcional)</span>
             <textarea className="input" rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
           <div className="flex gap-2">
-            <button type="button" className="btn btn-outline flex-1" onClick={() => setCheckout(false)}>Volver</button>
-            <button type="submit" className="btn flex-1">Enviar pedido</button>
+            <button type="button" className="btn btn-outline flex-1" onClick={() => setCheckout(false)} disabled={sending}>Volver</button>
+            <button type="submit" className="btn flex-1" disabled={sending}>{sending ? 'Enviando…' : 'Enviar pedido'}</button>
           </div>
         </form>
       )}

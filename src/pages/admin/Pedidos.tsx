@@ -75,7 +75,7 @@ export default function Pedidos() {
                     <span className="font-semibold">{o.customer_name}</span>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${STATUS_COLORS[o.status]}`}>{STATUS_LABELS[o.status]}</span>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${o.payment_confirmed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700'}`}>
-                      {o.payment_confirmed ? 'Anticipo ✓' : 'Sin anticipo'}
+                      {o.payment_confirmed ? 'Pago verificado ✓' : 'Pago por verificar'}
                     </span>
                     <span className="ml-auto font-bold text-brand-700">{money(o.total, currency)}</span>
                   </div>
@@ -91,8 +91,11 @@ export default function Pedidos() {
                   {o.notes && <p className="text-xs text-stone-500 italic">📝 {o.notes}</p>}
                   <div className="flex flex-wrap gap-2 mt-3">
                     <a className="btn btn-outline !py-1 !px-3 !text-xs" href={waLink(o.phone, `¡Hola ${o.customer_name}! Te escribe Pau's Cookies 🍪`)} target="_blank" rel="noreferrer">WhatsApp</a>
+                    {o.receipt_url && (
+                      <a className="btn btn-outline !py-1 !px-3 !text-xs" href={o.receipt_url} target="_blank" rel="noreferrer">🧾 Ver comprobante</a>
+                    )}
                     <button className="btn btn-outline !py-1 !px-3 !text-xs" onClick={() => togglePayment(o)}>
-                      {o.payment_confirmed ? 'Quitar anticipo' : 'Marcar anticipo recibido'}
+                      {o.payment_confirmed ? 'Quitar pago confirmado' : '✓ Confirmar pago'}
                     </button>
                     {next && <button className="btn !py-1 !px-3 !text-xs" onClick={() => setStatus(o, next.to)}>{next.label}</button>}
                     {o.status !== 'cancelado' && o.status !== 'entregado' && (
