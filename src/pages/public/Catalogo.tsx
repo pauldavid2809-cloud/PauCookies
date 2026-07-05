@@ -57,7 +57,6 @@ export default function Catalogo() {
   const itemCount = items.reduce((n, i) => n + i.qty, 0)
   const currency = settings?.currency ?? 'Bs'
   const totalBs = currency === '$' && bcvRate ? total * bcvRate : null
-  const moneyBs = (amount: number) => `Bs ${(amount * (bcvRate ?? 0)).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
   function add(id: string, delta: number) {
     setCart((c) => ({ ...c, [id]: Math.max(0, (c[id] ?? 0) + delta) }))
