@@ -59,25 +59,28 @@ export default function Productos() {
   async function remove(id: string) {
     if (!confirm('¿Eliminar este producto? Esta acción no se puede deshacer.')) return
 
-    // Verificar si hay pedidos que usan este producto
-    const { count } = await supabase
+    // Buscar pedidos que usan este producto
+    const { data: relatedItems, count } = await supabase
       .from('order_items')
-      .select('*', { count: 'exact', head: true })
+      .select('order_id', { count: 'exact' })
       .eq('product_id', id)
 
     if (count && count > 0) {
-      alert(
-        `Este producto tiene ${count} pedido(s) registrado(s) y no puede eliminarse.\n\n` +
-        `👉 Desactívalo en su lugar: edita el producto y desmarca "Visible en el catálogo". Así deja de aparecer sin perder el historial de pedidos.`,
+      const orderIds = [...new Set((relatedItems ?? []).map((i: { order_id: string }) => i.order_id))]
+      const ok = confirm(
+        `Este producto aparece en ${orderIds.length} pedido(s).\n\n` +
+        `¿Eliminar el producto Y esos pedidos de prueba?\n\n` +
+        `⚠️ Se borrarán permanentemente esos ${orderIds.length} pedido(s) y sus items.`,
       )
-      return
+      if (!ok) return
+
+      // Borrar order_items y orders de prueba
+      await supabase.from('order_items').delete().in('order_id', orderIds)
+      await supabase.from('orders').delete().in('id', orderIds)
     }
 
     const { error } = await supabase.from('products').delete().eq('id', id)
-    if (error) {
-      alert('No se pudo eliminar el producto: ' + error.message)
-      return
-    }
+    if (error) { alert('No se pudo eliminar el producto: ' + error.message); return }
     load()
   }
 
