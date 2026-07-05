@@ -82,7 +82,12 @@ export default function Pedidos() {
                   <ul className="text-sm text-stone-600 mb-1">
                     {orderItems.map((i) => <li key={i.id}>{i.qty} × {i.product_name}</li>)}
                   </ul>
-                  <p className="text-xs text-stone-500">📍 {o.zone} — {o.address}</p>
+                  <p className="text-xs text-stone-500">
+                    📍 {o.address}
+                    {o.lat != null && o.lng != null && (
+                      <a className="text-brand-600 underline ml-1" href={`https://www.google.com/maps/search/?api=1&query=${o.lat},${o.lng}`} target="_blank" rel="noreferrer">ver ubicación GPS</a>
+                    )}
+                  </p>
                   {o.notes && <p className="text-xs text-stone-500 italic">📝 {o.notes}</p>}
                   <div className="flex flex-wrap gap-2 mt-3">
                     <a className="btn btn-outline !py-1 !px-3 !text-xs" href={waLink(o.phone, `¡Hola ${o.customer_name}! Te escribe Pau's Cookies 🍪`)} target="_blank" rel="noreferrer">WhatsApp</a>

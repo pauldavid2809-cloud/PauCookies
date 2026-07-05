@@ -20,7 +20,6 @@ export default function Configuracion() {
       margin_multiplier: s.margin_multiplier,
       payment_info: s.payment_info,
       whatsapp: s.whatsapp,
-      delivery_zones: s.delivery_zones,
       advance_percent: s.advance_percent,
     }).eq('id', 1)
     setSaved(true)
@@ -59,8 +58,6 @@ export default function Configuracion() {
           <input className="input" value={s.whatsapp} onChange={(e) => setS({ ...s, whatsapp: e.target.value })} /></div>
         <div><span className="label">Datos de pago (se muestran a la clienta al pedir)</span>
           <textarea className="input" rows={4} placeholder={'Pago móvil: 0412-1234567\nBanco: …\nCédula: …'} value={s.payment_info} onChange={(e) => setS({ ...s, payment_info: e.target.value })} /></div>
-        <div><span className="label">Zonas de entrega (separadas por coma)</span>
-          <input className="input" value={s.delivery_zones} onChange={(e) => setS({ ...s, delivery_zones: e.target.value })} /></div>
         <button className="btn">{saved ? 'Guardado ✓' : 'Guardar'}</button>
       </form>
     </div>

@@ -15,7 +15,22 @@ export default function Catalogo() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const [form, setForm] = useState({ name: '', phone: '', date: '', address: '', zone: '', notes: '' })
+  const [form, setForm] = useState({ name: '', phone: '', date: '', address: '', notes: '' })
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
+  const [locStatus, setLocStatus] = useState<'idle' | 'getting' | 'ok' | 'error'>('idle')
+
+  function shareLocation() {
+    if (!navigator.geolocation) { setLocStatus('error'); return }
+    setLocStatus('getting')
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        setLocStatus('ok')
+      },
+      () => setLocStatus('error'),
+      { enableHighAccuracy: true, timeout: 15000 },
+    )
+  }
 
   useEffect(() => {
     Promise.all([
@@ -29,10 +44,6 @@ export default function Catalogo() {
     })
   }, [])
 
-  const zones = useMemo(
-    () => (settings?.delivery_zones ?? '').split(',').map((z) => z.trim()).filter(Boolean),
-    [settings],
-  )
   const items = useMemo(
     () => products.filter((p) => cart[p.id] > 0).map((p) => ({ product: p, qty: cart[p.id] })),
     [products, cart],
@@ -56,7 +67,8 @@ export default function Catalogo() {
       phone: form.phone,
       delivery_date: form.date,
       address: form.address,
-      zone: form.zone,
+      lat: coords?.lat ?? null,
+      lng: coords?.lng ?? null,
       notes: form.notes,
       total,
     })
@@ -159,11 +171,24 @@ export default function Catalogo() {
             <input className="input" required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
           <div><span className="label">Fecha de entrega</span>
             <input className="input" type="date" required min={todayISO()} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
-          <div><span className="label">Zona</span>
-            <input className="input" list="zonas" required value={form.zone} onChange={(e) => setForm({ ...form, zone: e.target.value })} />
-            <datalist id="zonas">{zones.map((z) => <option key={z} value={z} />)}</datalist></div>
-          <div><span className="label">Dirección exacta</span>
-            <input className="input" required value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
+          <div>
+            <span className="label">Ubicación para la entrega</span>
+            {locStatus !== 'ok' ? (
+              <button type="button" className="btn btn-outline w-full" onClick={shareLocation} disabled={locStatus === 'getting'}>
+                {locStatus === 'getting' ? 'Obteniendo ubicación…' : '📍 Compartir mi ubicación'}
+              </button>
+            ) : (
+              <div className="flex items-center justify-between gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-sm text-green-800">
+                <span>✓ Ubicación capturada</span>
+                <a className="underline" href={`https://www.google.com/maps?q=${coords!.lat},${coords!.lng}`} target="_blank" rel="noreferrer">Ver en mapa</a>
+              </div>
+            )}
+            {locStatus === 'error' && (
+              <p className="text-xs text-amber-700 mt-1">No pudimos obtener tu ubicación (¿negaste el permiso?). No te preocupes: escribe tu dirección bien detallada abajo.</p>
+            )}
+          </div>
+          <div><span className="label">Dirección / punto de referencia</span>
+            <input className="input" required placeholder="Edificio, casa, punto de referencia…" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
           <div><span className="label">Notas (opcional)</span>
             <textarea className="input" rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
           <div className="flex gap-2">

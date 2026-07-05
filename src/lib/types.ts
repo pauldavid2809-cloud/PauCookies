@@ -43,6 +43,8 @@ export interface Order {
   delivery_date: string
   address: string
   zone: string
+  lat: number | null
+  lng: number | null
   notes: string
   status: OrderStatus
   payment_confirmed: boolean

@@ -47,6 +47,8 @@ create table public.orders (
   delivery_date date not null,
   address text not null,
   zone text not null default '',
+  lat double precision,
+  lng double precision,
   notes text not null default '',
   status text not null default 'pendiente',   -- pendiente | confirmado | en_produccion | entregado | cancelado
   payment_confirmed boolean not null default false,
