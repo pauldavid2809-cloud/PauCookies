@@ -22,7 +22,7 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
       <form onSubmit={submit} className="card max-w-sm w-full grid gap-3 text-center">
-        <div className="text-4xl">🍪</div>
+        <img src="/logo.png" alt="Pau's Cookies" className="w-24 h-24 mx-auto object-contain" />
         <h1 className="text-xl font-bold text-brand-800">Pau's Cookies</h1>
         <p className="text-sm text-stone-500 -mt-2">Panel de administración</p>
         {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-2">{error}</div>}

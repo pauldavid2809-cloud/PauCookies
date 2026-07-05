@@ -1,70 +1,83 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-50: #fdf6ef;
-  --color-brand-100: #f9e8d8;
-  --color-brand-200: #f2cfae;
-  --color-brand-300: #e9af7b;
-  --color-brand-400: #de8a4a;
-  --color-brand-500: #d06f2d;
-  --color-brand-600: #b95a22;
-  --color-brand-700: #9a461e;
-  --color-brand-800: #7c391e;
-  --color-brand-900: #65301b;
+  /* Rosa kawaii — color principal */
+  --color-brand-50:  #fff0f6;
+  --color-brand-100: #ffd6ea;
+  --color-brand-200: #ffadd4;
+  --color-brand-300: #ff85bc;
+  --color-brand-400: #f760a4;
+  --color-brand-500: #e8458d;
+  --color-brand-600: #d03578;
+  --color-brand-700: #b02864;
+  --color-brand-800: #8e1e50;
+  --color-brand-900: #72163f;
+
+  /* Celeste kawaii — acento */
+  --color-teal-100: #d6f4f8;
+  --color-teal-300: #8ddde8;
+  --color-teal-500: #4fc4d8;
+  --color-teal-700: #2a9ab2;
 }
 
 body {
-  background-color: var(--color-brand-50);
-  color: var(--color-stone-800);
+  background-color: #fff0f6;
+  color: #3d1a2e;
   -webkit-font-smoothing: antialiased;
+  font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
 .input {
   width: 100%;
-  border: 1px solid var(--color-stone-300);
-  border-radius: 0.5rem;
+  border: 1px solid #f9b8d4;
+  border-radius: 0.75rem;
   padding: 0.5rem 0.75rem;
   background: white;
   font-size: 0.875rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 .input:focus {
-  outline: 2px solid var(--color-brand-400);
-  outline-offset: -1px;
+  outline: none;
+  border-color: var(--color-brand-400);
+  box-shadow: 0 0 0 3px #f76fa433;
 }
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.375rem;
-  border-radius: 0.5rem;
-  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  padding: 0.5rem 1.25rem;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
   background: var(--color-brand-600);
   color: white;
   cursor: pointer;
   border: none;
+  transition: background 0.15s, transform 0.1s;
 }
-.btn:hover { background: var(--color-brand-700); }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn:hover { background: var(--color-brand-700); transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 .btn-outline {
   background: white;
   color: var(--color-brand-700);
-  border: 1px solid var(--color-brand-300);
+  border: 2px solid var(--color-brand-300);
 }
 .btn-outline:hover { background: var(--color-brand-50); }
 .card {
   background: white;
-  border: 1px solid var(--color-stone-200);
-  border-radius: 0.75rem;
+  border: 1.5px solid #ffd6ea;
+  border-radius: 1rem;
   padding: 1rem;
+  box-shadow: 0 2px 8px 0 #f76fa410;
 }
 .label {
   display: block;
   font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--color-stone-500);
+  font-weight: 700;
+  color: var(--color-brand-700);
   margin-bottom: 0.25rem;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
 }

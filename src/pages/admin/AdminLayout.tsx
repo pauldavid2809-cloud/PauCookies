@@ -34,7 +34,10 @@ export default function AdminLayout() {
     <div className="min-h-screen">
       <header className="bg-white border-b border-stone-200 sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 py-2 flex items-center justify-between">
-          <span className="font-bold text-brand-800">🍪 Pau's Cookies</span>
+          <div className="flex items-center gap-2">
+            <img src="/logo.png" alt="Pau's Cookies" className="w-9 h-9 object-contain" />
+            <span className="font-bold text-brand-800 text-sm">Pau's Cookies</span>
+          </div>
           <button className="text-xs text-stone-500 underline" onClick={() => supabase.auth.signOut()}>Salir</button>
         </div>
         <nav className="max-w-5xl mx-auto px-4 pb-2 flex gap-1 overflow-x-auto">

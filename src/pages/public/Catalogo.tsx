@@ -158,8 +158,8 @@ export default function Catalogo() {
   return (
     <div className="max-w-2xl mx-auto p-4 pb-32">
       <header className="text-center py-6">
-        <div className="text-5xl">🍪</div>
-        <h1 className="text-2xl font-bold text-brand-800">{settings?.business_name ?? "Pau's Cookies"}</h1>
+        <img src="/logo.png" alt="Pau's Cookies" className="w-32 h-32 mx-auto object-contain drop-shadow-md" />
+        <h1 className="text-2xl font-bold text-brand-800 mt-1">{settings?.business_name ?? "Pau's Cookies"}</h1>
         <p className="text-sm text-stone-500 mt-1">Galletas artesanales hechas con amor · Pedidos con anticipación</p>
         <Link to="/reclamos" className="text-xs text-brand-600 underline mt-1 inline-block">¿Algo salió mal? Déjanos tu reclamo</Link>
       </header>
