@@ -14,6 +14,7 @@ export default function Catalogo() {
   const [placed, setPlaced] = useState<{ total: number } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [bcvRate, setBcvRate] = useState<number | null>(null)
 
   const [form, setForm] = useState({ name: '', phone: '', date: '', address: '', notes: '' })
   const [receipt, setReceipt] = useState<File | null>(null)
@@ -38,10 +39,12 @@ export default function Catalogo() {
     Promise.all([
       supabase.from('settings').select('*').eq('id', 1).single(),
       supabase.from('products').select('*').eq('active', true).order('name'),
-    ]).then(([s, p]) => {
+      fetch('https://ve.dolarapi.com/v1/dolares/oficial').then((r) => r.json()).catch(() => null),
+    ]).then(([s, p, bcv]) => {
       if (s.data) setSettings(s.data)
       if (p.data) setProducts(p.data)
       if (s.error || p.error) setError('No se pudo cargar el catálogo. Intenta de nuevo.')
+      if (bcv?.promedio) setBcvRate(bcv.promedio)
       setLoading(false)
     })
   }, [])
@@ -53,6 +56,8 @@ export default function Catalogo() {
   const total = items.reduce((sum, { product, qty }) => sum + product.price * qty, 0)
   const itemCount = items.reduce((n, i) => n + i.qty, 0)
   const currency = settings?.currency ?? 'Bs'
+  const totalBs = currency === '$' && bcvRate ? total * bcvRate : null
+  const moneyBs = (amount: number) => `Bs ${(amount * (bcvRate ?? 0)).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
   function add(id: string, delta: number) {
     setCart((c) => ({ ...c, [id]: Math.max(0, (c[id] ?? 0) + delta) }))
@@ -101,7 +106,8 @@ export default function Catalogo() {
   if (loading) return <div className="min-h-screen flex items-center justify-center text-stone-500">Cargando…</div>
 
   if (placed) {
-    const msg = `¡Hola! Soy ${form.name}. Acabo de hacer un pedido por ${money(placed.total, currency)} para el ${form.date} y ya subí mi comprobante de pago.`
+    const totalBsPlaced = currency === '$' && bcvRate ? placed.total * bcvRate : null
+    const msg = `¡Hola! Soy ${form.name}. Acabo de hacer un pedido por ${money(placed.total, currency)}${totalBsPlaced ? ` (Bs ${totalBsPlaced.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})` : ''} para el ${form.date} y ya subí mi comprobante de pago.`
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
         <div className="card max-w-md w-full text-center">
@@ -169,9 +175,21 @@ export default function Catalogo() {
             <div className="flex justify-between font-bold border-t border-brand-200 mt-2 pt-2">
               <span>Total</span><span>{money(total, currency)}</span>
             </div>
+            {totalBs && (
+              <div className="flex justify-between text-amber-700 text-xs font-semibold mt-1">
+                <span>Equivalente BCV oficial</span>
+                <span>Bs {totalBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+            )}
           </div>
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
             <p className="font-semibold text-amber-900 mb-1">💳 Realiza tu pago a estos datos:</p>
+            {totalBs && (
+              <p className="text-amber-800 font-bold mb-2 text-base">
+                Monto a transferir: Bs {totalBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                <span className="font-normal text-xs ml-1">(cambio BCV: {bcvRate?.toFixed(2)} Bs/$)</span>
+              </p>
+            )}
             <p className="whitespace-pre-wrap text-amber-900">{settings?.payment_info}</p>
           </div>
           <div>
