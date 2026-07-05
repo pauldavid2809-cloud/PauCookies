@@ -38,6 +38,7 @@ export default function Catalogo() {
     [products, cart],
   )
   const total = items.reduce((sum, { product, qty }) => sum + product.price * qty, 0)
+  const itemCount = items.reduce((n, i) => n + i.qty, 0)
   const currency = settings?.currency ?? 'Bs'
   const advancePct = settings?.advance_percent ?? 50
 
@@ -172,11 +173,11 @@ export default function Catalogo() {
         </form>
       )}
 
-      {!checkout && total > 0 && (
+      {!checkout && itemCount > 0 && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 p-3">
           <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs text-stone-500">{items.reduce((n, i) => n + i.qty, 0)} artículos</p>
+              <p className="text-xs text-stone-500">{itemCount} artículos</p>
               <p className="font-bold text-brand-800">{money(total, currency)}</p>
             </div>
             <button className="btn" onClick={() => setCheckout(true)}>Hacer pedido →</button>
