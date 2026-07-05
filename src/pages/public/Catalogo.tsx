@@ -11,7 +11,7 @@ export default function Catalogo() {
   const [products, setProducts] = useState<Product[]>([])
   const [cart, setCart] = useState<Cart>({})
   const [checkout, setCheckout] = useState(false)
-  const [placed, setPlaced] = useState<{ total: number; advance: number } | null>(null)
+  const [placed, setPlaced] = useState<{ total: number } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -53,7 +53,6 @@ export default function Catalogo() {
   const total = items.reduce((sum, { product, qty }) => sum + product.price * qty, 0)
   const itemCount = items.reduce((n, i) => n + i.qty, 0)
   const currency = settings?.currency ?? 'Bs'
-  const advancePct = settings?.advance_percent ?? 50
 
   function add(id: string, delta: number) {
     setCart((c) => ({ ...c, [id]: Math.max(0, (c[id] ?? 0) + delta) }))
@@ -94,7 +93,7 @@ export default function Catalogo() {
     )
     if (e2) { setSending(false); setError('El pedido se creó pero hubo un problema con los productos. Escríbenos por WhatsApp.'); return }
     setSending(false)
-    setPlaced({ total, advance: (total * advancePct) / 100 })
+    setPlaced({ total })
     setCart({})
     setCheckout(false)
   }
@@ -102,14 +101,14 @@ export default function Catalogo() {
   if (loading) return <div className="min-h-screen flex items-center justify-center text-stone-500">Cargando…</div>
 
   if (placed) {
-    const msg = `¡Hola! Soy ${form.name}. Acabo de hacer un pedido por ${money(placed.total, currency)} para el ${form.date} y ya subí mi comprobante del anticipo de ${money(placed.advance, currency)}.`
+    const msg = `¡Hola! Soy ${form.name}. Acabo de hacer un pedido por ${money(placed.total, currency)} para el ${form.date} y ya subí mi comprobante de pago.`
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
         <div className="card max-w-md w-full text-center">
           <div className="text-5xl mb-3">🎉</div>
           <h1 className="text-xl font-bold text-brand-800 mb-2">¡Pedido recibido!</h1>
           <p className="text-sm text-stone-600 mb-4">
-            Ya recibimos tu comprobante del anticipo ({money(placed.advance, currency)}).
+            Ya recibimos tu comprobante de pago ({money(placed.total, currency)}).
             Verificaremos el pago y te confirmaremos tu pedido por WhatsApp. 💛
           </p>
           {settings?.whatsapp && (
@@ -170,12 +169,9 @@ export default function Catalogo() {
             <div className="flex justify-between font-bold border-t border-brand-200 mt-2 pt-2">
               <span>Total</span><span>{money(total, currency)}</span>
             </div>
-            <div className="flex justify-between text-brand-700 font-bold">
-              <span>Anticipo a pagar ({advancePct}%)</span><span>{money((total * advancePct) / 100, currency)}</span>
-            </div>
           </div>
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
-            <p className="font-semibold text-amber-900 mb-1">💳 Paga el anticipo a estos datos:</p>
+            <p className="font-semibold text-amber-900 mb-1">💳 Realiza tu pago a estos datos:</p>
             <p className="whitespace-pre-wrap text-amber-900">{settings?.payment_info}</p>
           </div>
           <div>

@@ -20,7 +20,6 @@ export default function Configuracion() {
       margin_multiplier: s.margin_multiplier,
       payment_info: s.payment_info,
       whatsapp: s.whatsapp,
-      advance_percent: s.advance_percent,
     }).eq('id', 1)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
@@ -43,14 +42,12 @@ export default function Configuracion() {
       <form onSubmit={save} className="card grid gap-3">
         <div><span className="label">Nombre del negocio</span>
           <input className="input" value={s.business_name} onChange={(e) => setS({ ...s, business_name: e.target.value })} /></div>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <div><span className="label">Moneda</span>
             <select className="input" value={s.currency} onChange={(e) => setS({ ...s, currency: e.target.value })}>
               <option value="Bs">Bolívares (Bs)</option>
               <option value="$">Dólares ($)</option>
             </select></div>
-          <div><span className="label">Anticipo (%)</span>
-            <input className="input" type="number" min={0} max={100} value={s.advance_percent} onChange={(e) => setS({ ...s, advance_percent: Number(e.target.value) })} /></div>
           <div><span className="label">Margen sugerido (×)</span>
             <input className="input" type="number" min={1} step="0.1" value={s.margin_multiplier} onChange={(e) => setS({ ...s, margin_multiplier: Number(e.target.value) })} /></div>
         </div>
