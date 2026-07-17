@@ -175,6 +175,21 @@ export default function Catalogo() {
 
       {!checkout && (
         <div className="grid gap-3">
+          {/* Aviso: productos elaborados bajo pedido */}
+          <div className="relative overflow-hidden rounded-2xl border-2 border-brand-200 bg-gradient-to-br from-brand-50 via-white to-teal-100 p-4 shadow-sm">
+            <div className="absolute -top-4 -right-4 text-7xl opacity-10 select-none" aria-hidden="true">🧁</div>
+            <div className="flex items-start gap-3">
+              <div className="w-11 h-11 rounded-full bg-brand-100 flex items-center justify-center text-2xl shrink-0 shadow-sm">⏰</div>
+              <div>
+                <p className="font-bold text-brand-800 text-sm uppercase tracking-wide">✨ Información importante</p>
+                <p className="text-sm text-stone-700 mt-1 leading-relaxed">
+                  Todos nuestros productos son <span className="font-semibold text-brand-700">elaborados bajo pedido</span>.
+                  Agradecemos que planifiques tu compra y realices el pedido <span className="font-semibold text-brand-700">con antelación</span>,
+                  ya que no contamos con disponibilidad inmediata. 💛
+                </p>
+              </div>
+            </div>
+          </div>
           {products.length === 0 && <p className="text-center text-stone-500 text-sm">Aún no hay productos publicados.</p>}
           {products.map((p) => (
             <div key={p.id} className="card flex gap-3 items-center">
